@@ -14,10 +14,10 @@ export const registerSchema = Joi.object().keys({
     
 })
 export const updateUserSchema = Joi.object().keys({
-    firstName: Joi.string().required(),
-    lastName: Joi.string().required(),
-    phone: Joi.string().required(),
-    address: Joi.string().required(),   
+    firstName: Joi.string(),
+    lastName: Joi.string(),
+    phone: Joi.string(),
+    address: Joi.string(),   
 })
 export const adminSchema = Joi.object().keys({
     firstName: Joi.string().required(),
@@ -29,13 +29,22 @@ export const adminSchema = Joi.object().keys({
 })
 export const vendorSchema = Joi.object().keys({
     name: Joi.string().required(),
-    ownerName: Joi.string().required(),
+    restaurantName: Joi.string().required(),
     phone: Joi.string().required(),
     address: Joi.string().required(),
     password: Joi.string().pattern(new RegExp('^[a-zA-Z0-9]{3,30}$')),
     email: Joi.string().required(),
-    pincode: Joi.string().required(),   
+    pincode: Joi.string().required(), 
+    coverImage: Joi.string(),  
 })
+
+export const updateVendorSchema = Joi.object().keys({
+    name: Joi.string(),
+    phone: Joi.string(),
+    address: Joi.string(),
+    coverImage: Joi.string(),
+})
+
 export const foodSchema = Joi.object().keys({
     name: Joi.string().required(),
     description: Joi.string().required(),
@@ -43,7 +52,7 @@ export const foodSchema = Joi.object().keys({
     readyTime: Joi.number().required(),
     foodType: Joi.string().required(),
     price: Joi.number().required(),
-    rating: Joi.number().required(),   
+    rating: Joi.number(),   
 })
 
 export const loginSchema = Joi.object().keys({

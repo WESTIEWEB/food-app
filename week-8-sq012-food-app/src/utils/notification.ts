@@ -1,7 +1,6 @@
 import twilio from 'twilio'
 import { fromAdminPhone, authToken, accountSid,GMAIL_PW, GMAIL_USER,FromAdminMail, userSubject } from '../config'
 import nodemailer from 'nodemailer'
-import { STRING } from 'sequelize'
 
 export const GenerateOtp = () => {
     const otp = Math.floor(1000 + Math.random() * 9000)
@@ -24,7 +23,7 @@ export const requestOTP = async(otp:number, toPhoneNumber:string) => {
 } 
 
 // service and host are thesame
-//create a transporter object
+// create a transporter object
 const transport = nodemailer.createTransport({
     service: "gmail",
     auth: {
@@ -35,6 +34,17 @@ const transport = nodemailer.createTransport({
         rejectUnauthorized:false,
     }
 });
+// const transport = nodemailer.createTransport({
+//     host: "smtp.gmail.com",
+//   auth: {
+//     type: "login", // default
+//     user: "chibuike.iloc@gmail.com",
+//     pass: "fvwrnjclncexnyfi"
+//   },
+//     tls:{
+//         rejectUnauthorized:false,
+//     }
+// });
 
 // interface mailInfo {
 //     from:string,

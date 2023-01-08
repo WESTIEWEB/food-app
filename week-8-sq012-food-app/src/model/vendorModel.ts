@@ -6,13 +6,14 @@ import { FoodInstance } from './foodModel'
 export interface VendorAttributes{
     id: string;
     name: string;
-    ownerName: string;
     pincode: string;
     phone: string;
+    restaurantName: string;
     address:string;
     email:string;
     password:string;
     salt:string;
+    coverImage:string;
     serviceAvailable:boolean;
     rating:number;
     role:string;
@@ -44,7 +45,7 @@ VendorInstance.init({
             }
         }
     },
-    ownerName: {
+    restaurantName: {
         type:DataTypes.STRING,
         allowNull: false,
         validate: {
@@ -99,6 +100,10 @@ VendorInstance.init({
     },
     rating: {
         type:DataTypes.NUMBER,
+        allowNull:true,
+    },
+    coverImage: {
+        type:DataTypes.STRING,
         allowNull:true,
     },
     role: {

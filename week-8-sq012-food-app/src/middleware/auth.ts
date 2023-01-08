@@ -21,7 +21,7 @@ export const auth = async(req:JwtPayload, res:Response, next: NextFunction) => {
 
         if(!verified) {
             return res.status(401).json({
-                Error: "User not authorized, please signin"
+                Error: "User not authorized, user not verified"
             })
         }
 
@@ -32,7 +32,7 @@ export const auth = async(req:JwtPayload, res:Response, next: NextFunction) => {
         })
 
         if(!user) return res.status(401).json({
-            Error: ""
+            Error: "User does not exist ,please signup"
         })
 
         req.user = verified;
@@ -68,7 +68,7 @@ export const authVendor = async(req:JwtPayload, res:Response, next: NextFunction
         })
 
         if(!vendor) return res.status(401).json({
-            Error: ""
+            Error: "Not a Vendor"
         })
 
         req.vendor = verified;

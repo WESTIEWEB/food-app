@@ -5,7 +5,7 @@ import { auth } from '../middleware/auth'
 const router = express.Router();
 
 router.post('/signup', Register);
-router.post('/verify/:signature', verifyUser);
+router.post('/verify/:signature',auth, verifyUser);
 router.post('/login', Login);
 router.get('/resend-otp/:signature', resendOTP);
 router.get('/get-all-users', auth, getAllUser);

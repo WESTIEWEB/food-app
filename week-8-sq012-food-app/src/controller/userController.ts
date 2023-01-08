@@ -92,15 +92,14 @@ export const Register = async(req: Request, res: Response, next: NextFunction) =
     //    })
        
        return res.status(400).json({
-        message: "User already exist"
+        Error: "Email or Phone already exist please login"
        })
 
 
     } catch (error) {
         return res.status(500).json({
-            message: "Internal server Error",
+            Error: "Internal server Error",
             route: "/users/signup",
-            Error : error
         })
     }
 }
@@ -149,8 +148,8 @@ export const verifyUser = async( req:Request, res:Response) => {
               })
 
               return res.status(200).json({
-               message: "Your account was succesfully updated",
-               signature,
+               message: "Your account was succesfully verified",
+               signature: signature,
                verified: `${User.verified}`
               })
          }
@@ -180,41 +179,46 @@ export const Login = async ( req:Request, res:Response) => {
       const validateResult = loginSchema.validate(req.body,option);
       const { error } = validateResult
    //    console.log(error)
-      if(error) return res.status(400).json({ message: error.details[0].message }) 
+      if(error) return res.status(400).json({ Error: error.details[0].message }) 
+      console.log("User")
 
    // check if user exist
       const User = await UserIstance.findOne({
          where: { email: email}
       }) as unknown as UserAttributes;
-      
+      console.log(User)
+      if(User){
+        if(User.verified === true){
+            const validation = await validatePassword(password, User.password, User.salt);
 
-      if(User.verified === true){
-         const validation = await validatePassword(password, User.password, User.salt);
+            if(validation){
+               let signature = await GenerateSignature({
+                  id:User.id,
+                  email:User.email,
+                  verified:User.verified
+               }) 
 
-         if(validation){
-            let signature = await GenerateSignature({
-               id:User.id,
-               email:User.email,
-               verified:User.verified
-              }) 
+               return res.status(200).json({
+                  message: "succesfully logged in",
+                  signature,
+                  email: User.email,
+                  verified: User.verified,
+                  role: User.role
+               })
+            }
 
-            return res.status(200).json({
-               message: "succesfully logged in",
-               signature,
-               email: User.email,
-               verified: User.verified,
-               role: User.role
+            return res.status(400).json({
+               Error: "wrong email or password"
             })
-         }
-
-         return res.status(400).json({
-            Error: "wrong credentials/not ver"
-         })
+        }
+        return res.status(401).json({
+            Error: "User not verified"
+        })
 
       }
 
-      return res.status(400).json({
-         message: "User not verified"
+      return res.status(404).json({
+         Error: "User not found"
       })
 
    } catch(error) {
@@ -290,6 +294,9 @@ export const getAllUser = async (req:Request, res:Response) => {
 
       // const Users = await UserIstance.findAll({});
       const Users = await UserIstance.findAndCountAll({
+         where:{
+            role:"user"
+         },
          limit: limit
       })
 
@@ -337,7 +344,7 @@ export const getUser = async(req:JwtPayload, res:Response) => {
       
    } catch(error) {
       return res.status(500).json({
-         error,
+         Error: "Internal server error occoured",
          route: "/users/get-user"
       })
    }
@@ -361,7 +368,7 @@ export const updateUserProfile = async(req:JwtPayload, res:Response) => {
       }) as unknown as JwtPayload
       if(!User) return res.status(401).json({ Error: "Not authorized to update profile "});
 
-      const updateUser = await User.update({
+      const updateUser = await UserIstance.update({
          firstName,
          lastName,
          phone,
@@ -371,26 +378,26 @@ export const updateUserProfile = async(req:JwtPayload, res:Response) => {
          where: { id: id }
       })as unknown as JwtPayload
 
-      // if(updateUser) {
-      //    const User = await UserIstance.findOne({
-      //       where: { id: id}
-      //    }) as unknown as UserAttributes;
+      if(updateUser) {
+         const User = await UserIstance.findOne({
+            where: { id: id},
+            attributes: ["firstName","lastName","email","address","phone","verified","role"]
+         }) as unknown as UserAttributes;
 
-      //    return res.status(200).json({
-      //       message: "profile successfully update",
-      //       User
-      //    })
-      // }
-      return res.status(200).json({
-         message: "profile successfully update",
-         updateUser,
-      })
-
-      return res.status(401).json({
-         Error: "User not authorized to update profile"
-      })
+         return res.status(200).json({
+            message: "profile successfully update",
+            User
+         })
+      }
+      // return res.status(200).json({
+      //    message: "profile successfully update",
+      //    updateUser,
+      // })
 
    }catch(error) {
-
+      return res.status(500).json({
+         Error: "Internal error occoured",
+         route: "pathc/users/update-user"
+      })
    }
 }

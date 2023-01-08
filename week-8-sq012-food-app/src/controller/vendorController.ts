@@ -1,10 +1,10 @@
-import express, {Request, Response, NextFunction} from 'express';
+import {Request, Response, NextFunction} from 'express';
 import { v4 as uuidv4 } from 'uuid';
-import { loginSchema, option, GenerateSignature, validatePassword, foodSchema } from '../utils'
+import { loginSchema, option, GenerateSignature, validatePassword, foodSchema, updateVendorSchema } from '../utils'
 import { JwtPayload } from 'jsonwebtoken';
 import { VendorAttributes, VendorInstance } from '../model/vendorModel';
 import { FoodInstance, FoodAttributes } from '../model/foodModel';
-import { unlinkSync } from 'fs';
+
 
 /**
  * 
@@ -16,7 +16,7 @@ import { unlinkSync } from 'fs';
  */
 
 
-/**============================== Vendor Login ============================== **/
+/** ============================== Vendor Login ============================== **/
 export const vendorLogin = async ( req:Request, res:Response, next:NextFunction) => {
     try {
        const {
@@ -27,7 +27,7 @@ export const vendorLogin = async ( req:Request, res:Response, next:NextFunction)
        const validateResult = loginSchema.validate(req.body,option);
        const { error } = validateResult
     //    console.log(error)
-       if(error) return res.status(400).json({ message: error.details[0].message }) 
+       if(error) return res.status(400).json({ Error: error.details[0].message }) 
  
     // check if user exist
        const Vendor = await VendorInstance.findOne({
@@ -61,7 +61,7 @@ export const vendorLogin = async ( req:Request, res:Response, next:NextFunction)
        }
  
        return res.status(400).json({
-          message: "Vendor not verified"
+          Error: "account does not exist,contact Admin"
        })
  
     } catch(error) {
@@ -83,6 +83,7 @@ export const createFood = async(req:JwtPayload, res:Response) => {
         const fooduuid = uuidv4()
         const {
             name,
+            image,
             price,
             foodType,
             readyTime,
@@ -93,7 +94,7 @@ export const createFood = async(req:JwtPayload, res:Response) => {
         const validateResult = foodSchema.validate(req.body,option);
         const { error } = validateResult;
      //    console.log(error)
-        if(error) return res.status(400).json({ message: error.details[0].message });
+        if(error) return res.status(400).json({ Error: error.details[0].message });
 
         const isExistVendor = await VendorInstance.findOne({
             where: {
@@ -105,6 +106,7 @@ export const createFood = async(req:JwtPayload, res:Response) => {
             const createfood = await FoodInstance.create({
                 id: fooduuid,
                 name,
+                image: req.file.path,
                 price,
                 foodType,
                 readyTime,
@@ -119,7 +121,7 @@ export const createFood = async(req:JwtPayload, res:Response) => {
             });
         }
         return res.status(400).json({
-            message: "not authorised"
+            Error: "not authorised"
          })
 
     } catch(error) {
@@ -129,6 +131,25 @@ export const createFood = async(req:JwtPayload, res:Response) => {
          });
     }
 }
+
+export const GetAllVendors = async (req: Request, res: Response) => {
+   try {
+     
+     const Vendor = await VendorInstance.findAndCountAll({
+     }) 
+ 
+     return res.status(200).json({
+       vendor: Vendor.rows,
+     });
+   } catch (err) {
+     res.status(500).json({
+       Error: "Internal server Error",
+       route: "/vendors/get-profile",
+     });
+   }
+ };
+ 
+
  /**
  * =========================== Get Vendor Profile ================================
  */
@@ -141,8 +162,16 @@ export const vendorProfile = async(req:JwtPayload, res:Response) => {
          const Vendor = await VendorInstance.findOne({
             where: {
                id: id,
-               // attribute: [""]
             },
+            attributes:[
+               "id",
+               "name",
+               "pincode",
+               "phone",
+               "email",
+               "serviceAvailable",
+               "rating"
+            ],
             include:[
                {
                   model:FoodInstance,
@@ -161,12 +190,65 @@ export const vendorProfile = async(req:JwtPayload, res:Response) => {
     } catch(error) {
         return res.status(500).json({
             Error: "Internal server Error",
-            route: "/vendors/create-food"
+            route: "/vendors/get-profile"
          });
     }
 }
+
  /**
  * ===========================Vendor Delete Food ================================
+ */
+
+  export const updateVendorProfile = async(req:JwtPayload, res:Response) => {
+   try {
+      const { id } = req.vendor;
+      const { name, coverImage, address, phone} = req.body;
+
+      const { error } = updateVendorSchema.validate(req.body, option);
+
+      if(error) return res.status(400).json({Error: error.details[0].message});
+
+      const Vendor = await VendorInstance.findOne({
+         where: {id: id},
+      }) as unknown as JwtPayload
+      if(!Vendor) return res.status(401).json({ Error: "Not authorized to update profile "});
+
+      const updateVendor = await VendorInstance.update({
+         name,
+         address,
+         phone,
+         coverImage: req.file.path,
+      },
+      {
+         where: { id: id }
+      })as unknown as VendorAttributes
+
+      if(updateVendor) {
+         const vendor = await VendorInstance.findOne({
+            where: { id: id},
+            // attributes: ["firstName","coverImage","lastName","email","address","phone","verified","role"]
+         }) as unknown as VendorAttributes;
+
+         return res.status(200).json({
+            message: "profile successfully update",
+            vendor,
+         })
+      }
+      // return res.status(200).json({
+      //    message: "profile successfully update",
+      //    updateUser,
+      // })
+
+   }catch(error) {
+      return res.status(500).json({
+         Error: "Internal error occoured",
+         route: "patch/vendors/update-vendor"
+      })
+   }
+}
+
+ /**
+ * =========================== Vendor Delete Food ================================
  */
 
 export const deleteFood = async(req:JwtPayload, res:Response) => {
@@ -214,3 +296,40 @@ export const deleteFood = async(req:JwtPayload, res:Response) => {
          });
     }
 }
+
+
+export const GetFoodByVendor = async (req: Request, res: Response) => {
+   try {
+     const id = req.params.id;
+     // check if the vendor exist
+     const Vendor = (await VendorInstance.findOne({
+       where: { id: id },
+       include: [
+         {
+           model: FoodInstance,
+           as: "food",
+           attributes: [
+             "id",
+             "name",
+             "description",
+             "category",
+             "foodType",
+             "readyTime",
+             "price",
+             "image",
+             "rating",
+             "vendorId",
+           ],
+         },
+       ],
+     })) as unknown as VendorAttributes;
+     return res.status(200).json({
+       Vendor,
+     });
+   } catch (err) {
+     res.status(500).json({
+       Error: "Internal server Error",
+       route: "/vendors/get-profile",
+     });
+   }
+ };

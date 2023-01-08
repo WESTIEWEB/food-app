@@ -6,8 +6,8 @@ import adminRouter from './routes/admin'
 import indexRouter from './routes/index'
 import vendorsRoute from './routes/vendors'
 import { db } from './config/index'
-import dotenv from 'dotenv'
-import twilio from 'twilio'
+import dotenv from 'dotenv';
+import cors from 'cors';
 
 dotenv.config()
 
@@ -18,6 +18,7 @@ const app = express();
 app.use(express.json());
 app.use(logger("dev"));
 app.use(cookieParser());
+app.use(cors())
 
 const port = process.env.PORT || 4000;
 

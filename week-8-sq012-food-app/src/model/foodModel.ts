@@ -13,6 +13,7 @@ export interface FoodAttributes{
     category: string;
     rating:number;
     vendorId:string;
+    image: string;
     
 }
 
@@ -46,6 +47,10 @@ FoodInstance.init({
         allowNull:true,
     },
     description: {
+        type:DataTypes.STRING,
+        allowNull:true,
+    },
+    image: {
         type:DataTypes.STRING,
         allowNull:true,
     },

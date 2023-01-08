@@ -19,7 +19,7 @@ export const createAdmin = async (req:JwtPayload, res:Response ) => {
          lastName,
         } = req.body;
  
-        const uuiduser = uuidv4()
+        const uuidAdmin = uuidv4()
         const validateResult = adminSchema.validate(req.body,option);
         const { error } = validateResult
      //    console.log(error)
@@ -37,9 +37,9 @@ export const createAdmin = async (req:JwtPayload, res:Response ) => {
             where: {id: id }
         }) as unknown as UserAttributes;
 
-        if(Admin.email === email) return res.status(400).json({ message: "Email already exist"})
+        // if(Admin.email === email) return res.status(400).json({ message: "Email already exist"})
         
-        if(Admin.phone === phone) return res.status(400).json({ message: "Phone number already exist"})
+        // if(Admin.phone === phone) return res.status(400).json({ message: "Phone number already exist"})
         
         // check if Amin exist
         if(Admin.role === "superAdmin") {
@@ -56,8 +56,8 @@ export const createAdmin = async (req:JwtPayload, res:Response ) => {
             if(adminPhone === phone) return res.status(400).json({ message: "Phone number already exist"})
 
             if(!adminEmail && ! adminPhone) {
-                const User = await UserIstance.create({
-                    id:uuiduser,
+                const newAdmin = await UserIstance.create({
+                    id:uuidAdmin,
                     email,
                     password: vendorPassword,
                     firstName,
@@ -74,14 +74,14 @@ export const createAdmin = async (req:JwtPayload, res:Response ) => {
                     }) as unknown as UserAttributes
                     
                     let signature = await GenerateSignature({
-                    id:User.id,
+                    id:newAdmin.id,
                     email:email,
-                    verified:User.verified
+                    verified:newAdmin.verified
                     })
                     return res.status(201).json({
                     message: "Admin created succesfully",
                     signature,
-                    verified: User.verified,
+                    verified: newAdmin.verified,
                     })
             }
 
@@ -121,7 +121,7 @@ export const createSuperAdmin = async (req:JwtPayload, res:Response ) => {
         const validateResult = adminSchema.validate(req.body,option);
         const { error } = validateResult
      //    console.log(error)
-        if(error) return res.status(400).json({ message: error.details[0].message }) 
+        if(error) return res.status(400).json({ Error: error.details[0].message }) 
  
         //generate salt and hash pwd
         const salt = await GenerateSalt()
@@ -170,13 +170,13 @@ export const createSuperAdmin = async (req:JwtPayload, res:Response ) => {
  
         
         return res.status(400).json({
-         message: "Admin already exist"
+         Error: "Admin already exist"
         })
  
  
      } catch (error) {
          return res.status(500).json({
-             message: "Internal server Error",
+             Error: "Internal server Error",
              route: "/admins/signup",
          })
      }
@@ -189,20 +189,20 @@ export const createVendor = async(req: JwtPayload, res: Response, next: NextFunc
         const { id } = req.user;
         const {
             name,
-            ownerName,
             pincode,
+            restaurantName,
             phone,
             address,
+            coverImage,
             email,
             password,
         } = req.body;
-
+        
         const uuidvendor = uuidv4()
         const validateResult = vendorSchema.validate(req.body,option);
         const { error } = validateResult
      //    console.log(error)
-        if(error) return res.status(400).json({ message: error.details[0].message }) 
- 
+        if(error) return res.status(400).json({ Error: error.details[0].message }) 
         //generate salt and hash pwd
         const salt = await GenerateSalt()
         const vendorPassword = await GeneratePassword(password, salt);
@@ -215,16 +215,16 @@ export const createVendor = async(req: JwtPayload, res: Response, next: NextFunc
             where: {id: id }
         }) as unknown as JwtPayload;
 
-        
-        // check if Amin exist
+        // check if Amdin exist
         if(Admin.role === 'superAdmin' || Admin.role === 'admin') {
             if(!Vendor) {
                 const vendor = await VendorInstance.create({
                     id:uuidvendor,
                     email,
                     password: vendorPassword,
-                    ownerName,
+                    coverImage: '',
                     name,
+                    restaurantName,
                     salt,
                     address,
                     phone,
@@ -241,7 +241,7 @@ export const createVendor = async(req: JwtPayload, res: Response, next: NextFunc
                 })
             }
             return res.status(400).json({
-                message: "vendor already exist"
+                Error: "vendor already exist"
                })
         }
         return res.status(400).json({
@@ -249,7 +249,7 @@ export const createVendor = async(req: JwtPayload, res: Response, next: NextFunc
            })
     }catch(error){
         return res.status(500).json({
-            message: "Internal server Error",
+            Error: "Internal server Error",
             route: "/admins/create-vendors",
         })
     }

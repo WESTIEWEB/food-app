@@ -17,3 +17,6 @@ export const GMAIL_PW = process.env.Gmail_PW;
 export const FromAdminMail = process.env.FromAdminMail as string;
 export const userSubject = process.env.userSubject as string;
 export const App_Secret = process.env.JWT_SECRET as string;
+// export const Cloud_NAME = process.env.Cloud_Name as string;
+// export const Cloud_API_KEY= process.env.Cloud_API_KEY as string;
+// export const Cloud_SECRET= process.env.Cloud_API_SECRET as string;
